@@ -71,12 +71,10 @@ def get_last_log(repo, pkgbase):
         return None
 
     tag = tags[0]
-    log = {
+    return {
         'message': tag['commit']['message'],
         'author': tag['commit']['committer_email'],
     }
-
-    return log
 
 
 def add_signoff_comments():

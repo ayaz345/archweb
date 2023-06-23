@@ -53,9 +53,8 @@ def read_links(repopath):
 
     logger.info("Reading repo tarfile %s", repopath)
     filename = os.path.split(repopath)[1]
-    m = re.match(r"^(.*)\.links\.tar(\..*)?$", filename)
-    if m:
-        reponame = m.group(1)
+    if m := re.match(r"^(.*)\.links\.tar(\..*)?$", filename):
+        reponame = m[1]
     else:
         logger.error("File does not have the proper extension")
         raise Exception("File does not have the proper extension")

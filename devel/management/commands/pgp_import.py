@@ -38,7 +38,7 @@ class Command(BaseCommand):
         elif v >= 2:
             logger.level = logging.DEBUG
 
-        if len(args) < 1:
+        if not args:
             raise CommandError("keyring_path must be provided")
 
         import_keys(args[0])
@@ -63,10 +63,16 @@ def call_gpg(keyring, *args):
     # GPG is stupid and interprets any filename without path portion as being
     # in ~/.gnupg/. Fake it out if we just get a bare filename.
     if '/' not in keyring:
-        keyring = './%s' % keyring
-    gpg_cmd = ["gpg2", "--no-default-keyring", "--keyring", keyring,
-               "--with-colons", "--fixed-list-mode"]
-    gpg_cmd.extend(args)
+        keyring = f'./{keyring}'
+    gpg_cmd = [
+        "gpg2",
+        "--no-default-keyring",
+        "--keyring",
+        keyring,
+        "--with-colons",
+        "--fixed-list-mode",
+        *args,
+    ]
     logger.info("running command: %s", ' '.join(gpg_cmd))
     proc = subprocess.Popen(gpg_cmd, stdout=subprocess.PIPE)
     outdata, errdata = proc.communicate()
@@ -117,12 +123,9 @@ def find_key_owner(key, keys, finder):
     '''Recurse up the chain, looking for an owner.'''
     if key is None:
         return None
-    owner = finder.find_by_pgp_key(key.key)
-    if owner:
+    if owner := finder.find_by_pgp_key(key.key):
         return owner
-    if key.parent:
-        return find_key_owner(keys[key.parent], keys, finder)
-    return None
+    return find_key_owner(keys[key.parent], keys, finder) if key.parent else None
 
 
 def import_keys(keyring):
@@ -138,8 +141,7 @@ def import_keys(keyring):
         for data in keydata.values():
             parent_id = None
             if data.parent:
-                parent_data = keydata.get(data.parent, None)
-                if parent_data:
+                if parent_data := keydata.get(data.parent, None):
                     parent_id = parent_data.db_id
             other = {
                 'expires': data.expires,
@@ -195,9 +197,9 @@ def parse_sigdata(data):
             current_pubkey = parts[4]
             nodes[current_pubkey] = None
         elif parts[0] == 'uid':
-            uid = parts[9]
             # only set uid if this is the first one encountered
             if nodes[current_pubkey] is None:
+                uid = parts[9]
                 nodes[current_pubkey] = uid
         elif parts[0] == 'sig':
             signer = parts[4]

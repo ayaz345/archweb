@@ -45,11 +45,11 @@ class Mirror(models.Model):
         return Mirror.objects.filter(upstream=self).order_by('name')
 
     def get_absolute_url(self):
-        return '/mirrors/%s/' % self.name
+        return f'/mirrors/{self.name}/'
 
     def get_full_url(self, proto='https'):
         domain = Site.objects.get_current().domain
-        return '%s://%s%s' % (proto, domain, self.get_absolute_url())
+        return f'{proto}://{domain}{self.get_absolute_url()}'
 
 
 class MirrorProtocol(models.Model):
@@ -89,8 +89,7 @@ class MirrorUrl(models.Model):
     def address_families(self):
         hostname = urlparse(self.url).hostname
         info = socket.getaddrinfo(hostname, None, 0, socket.SOCK_STREAM)
-        families = [x[0] for x in info]
-        return families
+        return [x[0] for x in info]
 
     @property
     def hostname(self):
@@ -117,7 +116,7 @@ class MirrorUrl(models.Model):
 
     def get_full_url(self, proto='https'):
         domain = Site.objects.get_current().domain
-        return '%s://%s%s' % (proto, domain, self.get_absolute_url())
+        return f'{proto}://{domain}{self.get_absolute_url()}'
 
 
 class MirrorRsync(models.Model):
@@ -158,9 +157,7 @@ class CheckLocation(models.Model):
         '''Returns integer '4' or '6'.'''
         if self.family == socket.AF_INET6:
             return 6
-        if self.family == socket.AF_INET:
-            return 4
-        return None
+        return 4 if self.family == socket.AF_INET else None
 
 
 class MirrorLog(models.Model):
@@ -182,7 +179,7 @@ class MirrorLog(models.Model):
         return self.check_time - self.last_sync
 
     def __str__(self):
-        return "Check of %s at %s" % (self.url.url, self.check_time)
+        return f"Check of {self.url.url} at {self.check_time}"
 
     class Meta:
         verbose_name = 'mirror check log'

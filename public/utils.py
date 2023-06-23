@@ -12,9 +12,8 @@ class RecentUpdate(object):
         self.pkgbase = first.pkgbase
         self.repo = first.repo
         self.version = ''
-        self.classes = set()
+        self.classes = {self.repo.name.lower()}
 
-        self.classes.add(self.repo.name.lower())
         if self.repo.testing:
             self.classes.add('testing')
         if self.repo.staging:
@@ -40,15 +39,14 @@ class RecentUpdate(object):
         pkgbase packages.'''
         if self.packages:
             # we have real packages- just yield each in sequence
-            for package in self.packages:
-                yield package
+            yield from self.packages
         else:
             # fake out the template- this is slightly hacky but yields one
             # 'package-like' object per arch which is what the normal loop does
             by_arch = defaultdict(list)
             for package in self.others:
                 by_arch[package.arch].append(package)
-            for _, packages in by_arch.items():
+            for packages in by_arch.values():
                 if len(packages) == 1:
                     yield packages[0]
                 else:

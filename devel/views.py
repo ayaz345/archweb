@@ -143,8 +143,7 @@ def clock(request):
             latest_log.get(dev.id, None),
             dev.last_login,
         ]
-        dates = [d for d in dates if d is not None]
-        if dates:
+        if dates := [d for d in dates if d is not None]:
             dev.last_action = max(dates)
         else:
             dev.last_action = None
@@ -213,12 +212,18 @@ def tier0_mirror_auth(request):
     token = credentials[1]
 
     groups = Group.objects.filter(name__in=SELECTED_GROUPS)
-    user = User.objects.filter(username=username, is_active=True, groups__in=groups).select_related('userprofile').first()
-    if not user:
-        return unauthorized
-
-    if user and token == user.userprofile.repos_auth_token:
-        return HttpResponse('Authorized')
+    if (
+        user := User.objects.filter(
+            username=username, is_active=True, groups__in=groups
+        )
+        .select_related('userprofile')
+        .first()
+    ):
+        return (
+            HttpResponse('Authorized')
+            if token == user.userprofile.repos_auth_token
+            else unauthorized
+        )
     else:
         return unauthorized
 
@@ -278,7 +283,7 @@ def report(request, report_name, username=None):
     maints = User.objects.filter(id__in=PackageRelation.objects.filter(
         type=PackageRelation.MAINTAINER).values('user'))
 
-    if report.slug == 'uncompressed-man' or report.slug == 'uncompressed-info':
+    if report.slug in ['uncompressed-man', 'uncompressed-info']:
         packages = report.packages(packages, username)
     else:
         packages = report.packages(packages)
@@ -337,11 +342,9 @@ def new_user_form(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def admin_log(request, username=None):
-    user = None
-    if username:
-        user = get_object_or_404(User, username=username)
+    user = get_object_or_404(User, username=username) if username else None
     context = {'title': "Admin Action Log", 'log_user': user, }
-    context.update(admin.site.each_context(request))
+    context |= admin.site.each_context(request)
     return render(request, 'devel/admin_log.html', context)
 
 # vim: set ts=4 sw=4 et:

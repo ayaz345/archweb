@@ -18,7 +18,7 @@ from ..utils import multilib_differences, get_wrong_permissions
 @require_safe
 @cache_control(public=True, max_age=86400)
 def opensearch(request):
-    domain = "%s://%s" % (request.scheme, request.META.get('HTTP_HOST'))
+    domain = f"{request.scheme}://{request.META.get('HTTP_HOST')}"
 
     return render(request, 'packages/opensearch.xml',
                   {'domain': domain},
@@ -55,13 +55,13 @@ def update(request):
     if 'adopt' in request.POST:
         repos = request.user.userprofile.allowed_repos.all()
         pkgs = Package.objects.filter(id__in=ids, repo__in=repos)
-        disallowed_pkgs = Package.objects.filter(id__in=ids).exclude(
-            repo__in=repos)
-
-        if disallowed_pkgs:
-            messages.warning(request,
-                             "You do not have permission to adopt: %s." %
-                             (' '.join([p.pkgname for p in disallowed_pkgs])))
+        if disallowed_pkgs := Package.objects.filter(id__in=ids).exclude(
+            repo__in=repos
+        ):
+            messages.warning(
+                request,
+                f"You do not have permission to adopt: {' '.join([p.pkgname for p in disallowed_pkgs])}.",
+            )
 
         for pkg in pkgs:
             if request.user in pkg.maintainers:
@@ -132,20 +132,16 @@ def stale_relations_update(request):
 
 
 def sonames(request):
-    if request.method == 'GET':
-        packages = []
-        name = request.GET.get('name')
-
-        if name:
-            sonames = Soname.objects.filter(name__startswith=name).values('pkg__pkgname', 'pkg__pkgver', 'pkg__pkgrel', 'pkg__epoch', 'pkg__repo__name')
-            packages = [{'pkgname': soname['pkg__pkgname'], 'pkgrel': soname['pkg__pkgrel'], 'pkgver': soname['pkg__pkgver'], 'epoch': soname['pkg__epoch'], 'repo': soname['pkg__repo__name'].lower()} for soname in sonames]
-        else:
-            return HttpResponseBadRequest('name parameter is required')
-
-        to_json = json.dumps(packages, ensure_ascii=False)
-        return HttpResponse(to_json, content_type='application/json')
-
-    else:
+    if request.method != 'GET':
         return HttpResponseBadRequest('only GET is allowed')
+    packages = []
+    if name := request.GET.get('name'):
+        sonames = Soname.objects.filter(name__startswith=name).values('pkg__pkgname', 'pkg__pkgver', 'pkg__pkgrel', 'pkg__epoch', 'pkg__repo__name')
+        packages = [{'pkgname': soname['pkg__pkgname'], 'pkgrel': soname['pkg__pkgrel'], 'pkgver': soname['pkg__pkgver'], 'epoch': soname['pkg__epoch'], 'repo': soname['pkg__repo__name'].lower()} for soname in sonames]
+    else:
+        return HttpResponseBadRequest('name parameter is required')
+
+    to_json = json.dumps(packages, ensure_ascii=False)
+    return HttpResponse(to_json, content_type='application/json')
 
 # vim: set ts=4 sw=4 et:

@@ -28,19 +28,14 @@ class IPNetworkField(models.Field):
         return "IPAddressField"
 
     def to_python(self, value):
-        if not value:
-            return None
-        return IP(value)
+        return None if not value else IP(value)
 
     def get_prep_value(self, value):
         value = self.to_python(value)
-        if not value:
-            return None
-        return str(value)
+        return None if not value else str(value)
 
     def formfield(self, **kwargs):
-        defaults = {'form_class': IPNetworkFormField}
-        defaults.update(kwargs)
+        defaults = {'form_class': IPNetworkFormField} | kwargs
         return super(IPNetworkField, self).formfield(**defaults)
 
     def from_db_value(self, value, expression, connection):

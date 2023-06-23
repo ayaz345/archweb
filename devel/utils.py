@@ -70,9 +70,7 @@ class UserFinder(object):
     @staticmethod
     @ignore_does_not_exist
     def user_email(name, email):
-        if email:
-            return User.objects.get(email=email)
-        return None
+        return User.objects.get(email=email) if email else None
 
     @staticmethod
     @ignore_does_not_exist
@@ -89,9 +87,7 @@ class UserFinder(object):
     @staticmethod
     @ignore_does_not_exist
     def profile_email(name, email):
-        if email:
-            return User.objects.get(userprofile__public_email=email)
-        return None
+        return User.objects.get(userprofile__public_email=email) if email else None
 
     @staticmethod
     @ignore_does_not_exist
@@ -124,13 +120,12 @@ class UserFinder(object):
 
         name = email = None
 
-        matches = re.match(r'^([^<]+)? ?<([^>]*)>?', userstring)
-        if not matches:
-            name = userstring.strip()
-        else:
-            name = matches.group(1)
-            email = matches.group(2)
+        if matches := re.match(r'^([^<]+)? ?<([^>]*)>?', userstring):
+            name = matches[1]
+            email = matches[2]
 
+        else:
+            name = userstring.strip()
         user = None
         find_methods = (self.user_email, self.profile_email,
                         self.username_email, self.user_name)
@@ -166,8 +161,8 @@ class UserFinder(object):
         user = self.user_email(None, email)
         if user is None:
             user = self.profile_email(None, email)
-            if user is None:
-                user = self.username_email(None, email)
+        if user is None:
+            user = self.username_email(None, email)
 
         self.email_cache[email] = user
         return user

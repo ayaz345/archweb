@@ -44,9 +44,7 @@ class AlpmAPI(object):
         self.available = ALPM is not None
 
     def version(self):
-        if not self.available:
-            return None
-        return ALPM.alpm_version()
+        return None if not self.available else ALPM.alpm_version()
 
     def vercmp(self, ver1, ver2):
         if not self.available:
@@ -56,7 +54,7 @@ class AlpmAPI(object):
     def compare_versions(self, ver1, oper, ver2):
         func = self.OPERATOR_MAP.get(oper, None)
         if func is None:
-            raise Exception("Invalid operator %s specified" % oper)
+            raise Exception(f"Invalid operator {oper} specified")
         if not self.available:
             return None
         res = self.vercmp(ver1, ver2)

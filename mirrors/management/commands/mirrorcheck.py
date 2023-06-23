@@ -107,7 +107,7 @@ def parse_lastsync(log, data):
 
 
 def check_mirror_url(mirror_url, location, timeout):
-    url = mirror_url.url + 'lastsync'
+    url = f'{mirror_url.url}lastsync'
     logger.info("checking URL %s", url)
     log = MirrorLog(url=mirror_url, check_time=now(), location=location)
     headers = {'User-Agent': 'archweb/1.0'}
@@ -164,7 +164,7 @@ def check_mirror_url(mirror_url, location, timeout):
 
 
 def check_rsync_url(mirror_url, location, timeout):
-    url = mirror_url.url + 'lastsync'
+    url = f'{mirror_url.url}lastsync'
     logger.info("checking URL %s", url)
     log = MirrorLog(url=mirror_url, check_time=now(), location=location)
 

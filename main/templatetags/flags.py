@@ -8,8 +8,9 @@ register = template.Library()
 def country_flag(country):
     if not country:
         return ''
-    return format_html('<span class="fam-flag fam-flag-%s" title="%s"></span> ' % (
-        str(country.code).lower(), str(country.name)))
+    return format_html(
+        f'<span class="fam-flag fam-flag-{str(country.code).lower()}" title="{str(country.name)}"></span> '
+    )
 
 
 # vim: set ts=4 sw=4 et:

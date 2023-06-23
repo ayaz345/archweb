@@ -27,8 +27,7 @@ class MirrorUrlForm(forms.ModelForm):
         path = url_parts.path
         if not path.endswith('/'):
             path += '/'
-        url = urlunsplit((url_parts.scheme, url_parts.netloc, path, '', ''))
-        return url
+        return urlunsplit((url_parts.scheme, url_parts.netloc, path, '', ''))
 
 
 class MirrorUrlInlineAdmin(admin.TabularInline):
@@ -78,7 +77,7 @@ class MirrorAdmin(admin.ModelAdmin):
         if '~~~' in obj.notes:
             date = datetime.utcnow().strftime('%Y-%m-%d')
             usertext = request.user.get_full_name()
-            obj.notes = obj.notes.replace('~~~', '%s (%s)' % (date, usertext))
+            obj.notes = obj.notes.replace('~~~', f'{date} ({usertext})')
         obj.save()
 
 

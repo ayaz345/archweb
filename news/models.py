@@ -21,7 +21,7 @@ class News(models.Model):
     send_announce = models.BooleanField(default=True)
 
     def get_absolute_url(self):
-        return '/news/%s/' % self.slug
+        return f'/news/{self.slug}/'
 
     def html(self):
         return mark_safe(parse_markdown(self.content, not self.safe_mode))

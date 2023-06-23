@@ -102,11 +102,7 @@ def annotate_url(url, url_data):
     if url.delay is not None:
         hours = url.delay.days * 24.0 + url.delay.seconds / 3600.0
 
-        if url.completion_pct > 0.0:
-            divisor = url.completion_pct
-        else:
-            # arbitrary small value
-            divisor = 0.005
+        divisor = url.completion_pct if url.completion_pct > 0.0 else 0.005
         stddev = url.duration_stddev or 0.0
         url.score = (hours + url.duration_avg + stddev) / divisor
 
@@ -189,23 +185,26 @@ def get_mirror_url_for_download(cutoff=DEFAULT_CUTOFF):
     if log_data['check_time__max'] is not None:
         min_check_time = log_data['check_time__max'] - timedelta(minutes=5)
         min_sync_time = log_data['last_sync__max'] - timedelta(minutes=20)
-        best_logs = MirrorLog.objects.select_related('url').filter(
-            is_success=True,
-            check_time__gte=min_check_time, last_sync__gte=min_sync_time,
-            url__active=True,
-            url__mirror__public=True, url__mirror__active=True,
-            url__protocol__default=True,
-            url__protocol__protocol='https').order_by(
-            'duration')[:1]
-        if best_logs:
+        if (
+            best_logs := MirrorLog.objects.select_related('url')
+            .filter(
+                is_success=True,
+                check_time__gte=min_check_time,
+                last_sync__gte=min_sync_time,
+                url__active=True,
+                url__mirror__public=True,
+                url__mirror__active=True,
+                url__protocol__default=True,
+                url__protocol__protocol='https',
+            )
+            .order_by('duration')[:1]
+        ):
             return best_logs[0].url
 
     mirror_urls = MirrorUrl.objects.filter(active=True, mirror__public=True,
                                            mirror__active=True,
                                            protocol__protocol='https',
                                            protocol__default=True)[:1]
-    if not mirror_urls:
-        return None
-    return mirror_urls[0]
+    return None if not mirror_urls else mirror_urls[0]
 
 # vim: set ts=4 sw=4 et:

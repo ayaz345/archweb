@@ -21,7 +21,7 @@ def test_details_json_empty(db, client):
 def test_details_json(db, client, mirrorurl):
     url = mirrorurl.mirror.get_absolute_url()
 
-    response = client.get(url + 'json/')
+    response = client.get(f'{url}json/')
     assert response.status_code == 200
     data = response.json()
     assert data['urls'] != []
@@ -36,7 +36,7 @@ def test_details_downstream_json(db, client, downstream_mirror, mirrorprotocol):
                                           country="DE")
 
     url = mirror_url.mirror.get_absolute_url()
-    response = client.get(url + 'json/')
+    response = client.get(f'{url}json/')
     assert response.status_code == 200
     data = response.json()
     assert data['urls'] != []
@@ -48,5 +48,5 @@ def test_details_downstream_json(db, client, downstream_mirror, mirrorprotocol):
 
 def test_url_details(db, client, mirrorurl):
     url = mirrorurl.mirror.get_absolute_url()
-    response = client.get(url + '{}/'.format(mirrorurl.id))
+    response = client.get(f'{url}{mirrorurl.id}/')
     assert response.status_code == 200

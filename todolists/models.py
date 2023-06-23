@@ -38,12 +38,12 @@ class Todolist(models.Model):
         return self.description.strip()
 
     def get_absolute_url(self):
-        return '/todo/%s/' % self.slug
+        return f'/todo/{self.slug}/'
 
     def get_full_url(self, proto='https'):
         '''get a URL suitable for things like email including the domain'''
         domain = Site.objects.get_current().domain
-        return '%s://%s%s' % (proto, domain, self.get_absolute_url())
+        return f'{proto}://{domain}{self.get_absolute_url()}'
 
     def packages(self):
         if not hasattr(self, '_packages'):
@@ -106,7 +106,7 @@ def check_todolist_complete(sender, instance, **kwargs):
         return
 
     # Send e-mail notification
-    subject = "The last package on the TODO list '%s' has been completed." % instance.todolist.name
+    subject = f"The last package on the TODO list '{instance.todolist.name}' has been completed."
     tmpl = loader.get_template('todolists/complete_email_notification.txt')
     toemail = [instance.todolist.creator.email]
     ctx = {

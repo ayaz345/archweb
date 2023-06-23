@@ -24,7 +24,7 @@ def index(request):
     else:
         def updates():
             return get_recent_updates()
-    domain = "%s://%s" % (request.scheme, request.META.get('HTTP_HOST'))
+    domain = f"{request.scheme}://{request.META.get('HTTP_HOST')}"
     context = {
         'news_updates': News.objects.order_by('-postdate', '-id')[:15],
         'pkg_updates': updates,
@@ -146,11 +146,14 @@ def keys_json(request):
 
     master_keys = MasterKey.objects.select_related('owner').filter(
             revoked__isnull=True)
-    node_list.extend({
-            'name': 'Master Key (%s)' % key.owner.get_full_name(),
+    node_list.extend(
+        {
+            'name': f'Master Key ({key.owner.get_full_name()})',
             'key': key.pgp_key,
-            'group': 'master'
-        } for key in master_keys)
+            'group': 'master',
+        }
+        for key in master_keys
+    )
 
     not_expired = Q(expires__gt=datetime.utcnow()) | Q(expires__isnull=True)
     signatures = PGPSignature.objects.filter(not_expired, revoked__isnull=True)

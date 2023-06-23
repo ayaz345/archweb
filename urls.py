@@ -36,20 +36,25 @@ our_sitemaps = {
 
 news_sitemaps = {'news': sitemaps.RecentNewsSitemap}
 
-urlpatterns = []
-
-# Public pages
-urlpatterns.extend([
+urlpatterns = [
     path('', public.views.index, name='index'),
-    path('about/', TemplateView.as_view(template_name='public/about.html'), name='page-about'),
-    path('art/',   TemplateView.as_view(template_name='public/art.html'), name='page-art'),
+    path(
+        'about/',
+        TemplateView.as_view(template_name='public/about.html'),
+        name='page-about',
+    ),
+    path(
+        'art/',
+        TemplateView.as_view(template_name='public/art.html'),
+        name='page-art',
+    ),
     path('donate/', public.views.donate, name='page-donate'),
     path('download/', public.views.download, name='page-download'),
     path('master-keys/', public.views.keys, name='page-keys'),
     path('master-keys/json/', public.views.keys_json, name='pgp-keys-json'),
     re_path(r'^people/(?P<slug>[-\w]+)/$', public.views.people, name='people'),
     path('planet/', planet.views.index, name='planet'),
-])
+]
 
 # Feeds patterns, used below
 feeds_patterns = [

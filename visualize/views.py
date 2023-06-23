@@ -22,7 +22,7 @@ def arch_repo_data():
     repos = Repo.objects.values_list('name', flat=True)
 
     def build_map(name, arch, repo):
-        key = '%s:%s' % (repo or '', arch or '')
+        key = f"{repo or ''}:{arch or ''}"
         return {
             'key': key,
             'name': name,
@@ -41,8 +41,8 @@ def arch_repo_data():
         values = {
             'arch': arch,
             'repo': repo,
-            'name': '%s (%s)' % (repo, arch),
-            'key': '%s:%s' % (repo, arch),
+            'name': f'{repo} ({arch})',
+            'key': f'{repo}:{arch}',
             'csize': row['csize'],
             'isize': row['isize'],
             'count': row['count'],

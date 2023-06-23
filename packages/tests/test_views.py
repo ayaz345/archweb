@@ -5,7 +5,7 @@ def test_feed(db, client):
 
 def test_sitemap(db, client):
     for sitemap in ['packages', 'package-groups', 'package-files', 'split-packages']:
-        response = client.get('/sitemap-{}.xml'.format(sitemap))
+        response = client.get(f'/sitemap-{sitemap}.xml')
         assert response.status_code == 200
 
 
@@ -24,7 +24,13 @@ def test_reponame(client, package):
 
     data = response.json()
     assert len(data['results']) == 5
-    assert set([r['pkgname'] for r in data['results']]) == {"coreutils", "glibc", "linux", "pacman", "systemd"}
+    assert {r['pkgname'] for r in data['results']} == {
+        "coreutils",
+        "glibc",
+        "linux",
+        "pacman",
+        "systemd",
+    }
 
 
 def test_packagename(client, package):

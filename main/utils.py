@@ -17,7 +17,7 @@ def cache_function_key(func, args, kwargs):
     raw = [func.__name__, func.__module__, args, kwargs]
     pickled = pickle.dumps(raw, protocol=pickle.HIGHEST_PROTOCOL)
     key = hashlib.md5(pickled).hexdigest()
-    return 'cache_function.' + func.__name__ + '.' + key
+    return f'cache_function.{func.__name__}.{key}'
 
 
 def cache_function(length):
@@ -38,11 +38,12 @@ def cache_function(length):
             value = cache.get(key)
             if value is not None:
                 return value
-            else:
-                result = func(*args, **kwargs)
-                cache.set(key, result, length)
-                return result
+            result = func(*args, **kwargs)
+            cache.set(key, result, length)
+            return result
+
         return inner_func
+
     return decorator
 
 

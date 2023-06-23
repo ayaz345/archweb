@@ -83,8 +83,7 @@ def status_json(request, tier=None):
         data['urls'] = [url for url in data['urls'] if url.mirror.tier == tier]
     data['version'] = 3
     to_json = json.dumps(data, ensure_ascii=False, cls=MirrorStatusJSONEncoder)
-    response = HttpResponse(to_json, content_type='application/json')
-    return response
+    return HttpResponse(to_json, content_type='application/json')
 
 
 def mirror_details_json(request, name):
@@ -103,16 +102,15 @@ def mirror_details_json(request, name):
         data['admin_email'] = mirror.admin_email
         data['alternate_email'] = mirror.alternate_email
     to_json = json.dumps(data, ensure_ascii=False, cls=ExtendedMirrorStatusJSONEncoder)
-    response = HttpResponse(to_json, content_type='application/json')
-    return response
+    return HttpResponse(to_json, content_type='application/json')
 
 
 def locations_json(request):
-    data = {}
-    data['version'] = 1
-    data['locations'] = list(CheckLocation.objects.all().order_by('pk'))
+    data = {
+        'version': 1,
+        'locations': list(CheckLocation.objects.all().order_by('pk')),
+    }
     to_json = json.dumps(data, ensure_ascii=False, cls=LocationJSONEncoder)
-    response = HttpResponse(to_json, content_type='application/json')
-    return response
+    return HttpResponse(to_json, content_type='application/json')
 
 # vim: set ts=4 sw=4 et:

@@ -18,7 +18,7 @@ class BuildQueryStringNode(template.Node):
             if self.sortfield.startswith('-'):
                 qs['sort'] = [self.sortfield[1:]]
             else:
-                qs['sort'] = ['-' + self.sortfield]
+                qs['sort'] = [f'-{self.sortfield}']
         else:
             qs['sort'] = [self.sortfield]
         return urlencode(qs, True).replace('&', '&amp;')
@@ -30,7 +30,7 @@ def do_buildsortqs(parser, token):
         _, sortfield = token.split_contents()
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires a single argument" % token)
-    if not (sortfield[0] == sortfield[-1] and sortfield[0] in ('"', "'")):
+    if sortfield[0] != sortfield[-1] or sortfield[0] not in ('"', "'"):
         raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % token)
     return BuildQueryStringNode(sortfield[1:-1])
 
@@ -43,7 +43,7 @@ def pkg_details_link(pkg, link_title=None, honor_flagged=False):
         link_title = pkg.pkgname
     link_content = link_title
     if honor_flagged and pkg.flag_date:
-        link_content = '<span class="flagged">%s</span>' % link_title
+        link_content = f'<span class="flagged">{link_title}</span>'
     link = '<a href="%s" title="View package details for %s">%s</a>'
     return format_html(link % (pkg.get_absolute_url(), pkg.pkgname, link_content))
 

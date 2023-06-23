@@ -156,7 +156,9 @@ def test_parse_item_summary(feed, command):
         feed.save()
         value = Result()
         entry = Entry()
-        entry.description = ' '.join(['x' * 4 for x in range(0, FEEDITEM_SUMMARY_LIMIT * 4, 4)])
+        entry.description = ' '.join(
+            ['x' * 4 for _ in range(0, FEEDITEM_SUMMARY_LIMIT * 4, 4)]
+        )
 
         value.entries = [entry]
         parse.return_value = value

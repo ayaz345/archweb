@@ -66,7 +66,7 @@ class PackageFeed(Feed):
     __name__ = 'package_feed'
 
     def get_object(self, request, arch='', repo=''):
-        obj = dict()
+        obj = {}
         qs = Package.objects.normal().order_by('-last_update')
 
         if arch != '':
@@ -74,26 +74,25 @@ class PackageFeed(Feed):
             a = Arch.objects.get(name=arch)
             qs = qs.filter(Q(arch=a) | Q(arch__agnostic=True))
             obj['arch'] = a
-        if repo != '':
-            if repo == 'stable-repos':
-                # feed for a single arch AND all stable repos
-                r = Repo.objects.filter(testing=False, staging=False)
-                qs = qs.filter(repo__in=r)
-                obj['repos'] = r
-                setattr(obj['repos'], 'name', 'all stable repositories')
-            elif repo == 'testing-repos':
-                # feed for a single arch AND all testing repos
-                r = Repo.objects.filter(testing=True, staging=False)
-                qs = qs.filter(repo__in=r)
-                obj['repos'] = r
-                setattr(obj['repos'], 'name', 'all testing repositories')
-            else:
-                # feed for a single arch AND repo
-                r = Repo.objects.get(name__iexact=repo)
-                qs = qs.filter(repo=r)
-                obj['repo'] = r
-        else:
+        if repo == '':
             qs = qs.filter(repo__staging=False)
+        elif repo == 'stable-repos':
+            # feed for a single arch AND all stable repos
+            r = Repo.objects.filter(testing=False, staging=False)
+            qs = qs.filter(repo__in=r)
+            obj['repos'] = r
+            setattr(obj['repos'], 'name', 'all stable repositories')
+        elif repo == 'testing-repos':
+            # feed for a single arch AND all testing repos
+            r = Repo.objects.filter(testing=True, staging=False)
+            qs = qs.filter(repo__in=r)
+            obj['repos'] = r
+            setattr(obj['repos'], 'name', 'all testing repositories')
+        else:
+            # feed for a single arch AND repo
+            r = Repo.objects.get(name__iexact=repo)
+            qs = qs.filter(repo=r)
+            obj['repo'] = r
         obj['qs'] = qs[:50]
         return obj
 
@@ -101,8 +100,9 @@ class PackageFeed(Feed):
         s = 'Arch Linux: Recent package updates'
         fields = dict(
             arch=obj['arch'].name if 'arch' in obj else None,
-            repo='[%s]' % obj['repo'].name.lower() if 'repo' in obj else None,
-            repos=obj['repos'].name if 'repos' in obj else None,)
+            repo=f"[{obj['repo'].name.lower()}]" if 'repo' in obj else None,
+            repos=obj['repos'].name if 'repos' in obj else None,
+        )
 
         if fields['arch']:
             if fields['repo']:
@@ -125,8 +125,11 @@ class PackageFeed(Feed):
 
         fields = dict(
             arch=obj['arch'].name if 'arch' in obj else None,
-            repo='[%s]' % obj['repo'].name.lower() if 'repo' in obj else None,
-            repos=', '.join(['[%s]' % r.name.lower() for r in obj['repos'].all()]) if 'repos' in obj else None,)
+            repo=f"[{obj['repo'].name.lower()}]" if 'repo' in obj else None,
+            repos=', '.join([f'[{r.name.lower()}]' for r in obj['repos'].all()])
+            if 'repos' in obj
+            else None,
+        )
 
         if fields['arch']:
             s += ' for the \'%(arch)s\' architecture'
@@ -151,15 +154,13 @@ class PackageFeed(Feed):
     def item_guid(self, item):
         # http://diveintomark.org/archives/2004/05/28/howto-atom-id
         date = item.last_update
-        return 'tag:%s,%s:%s%s' % (Site.objects.get_current().domain,
-                                   date.strftime('%Y-%m-%d'), item.get_absolute_url(),
-                                   date.strftime('%Y%m%d%H%M'))
+        return f"tag:{Site.objects.get_current().domain},{date.strftime('%Y-%m-%d')}:{item.get_absolute_url()}{date.strftime('%Y%m%d%H%M')}"
 
     def item_pubdate(self, item):
         return item.last_update
 
     def item_title(self, item):
-        return '%s %s %s' % (item.pkgname, item.full_version, item.arch.name)
+        return f'{item.pkgname} {item.full_version} {item.arch.name}'
 
     def item_description(self, item):
         return item.pkgdesc
@@ -186,7 +187,7 @@ class PackageUpdatesFeed(Feed):
     __name__ = 'packages_updates_feed'
 
     def get_object(self, request, operation='', arch='', repo=''):
-        obj = dict()
+        obj = {}
 
         if 'added' in request.path:
             flag = ADDITION
@@ -202,27 +203,26 @@ class PackageUpdatesFeed(Feed):
             a = Arch.objects.get(name=arch)
             qs = qs.filter(Q(arch=a) | Q(arch__agnostic=True))
             obj['arch'] = a
-        if repo != '':
-            if repo == 'stable-repos':
-                # feed for a single arch AND all stable repos
-                r = Repo.objects.filter(testing=False, staging=False)
-                qs = qs.filter(repo__in=r)
-                obj['repos'] = r
-                setattr(obj['repos'], 'name', 'all stable repositories')
-            elif repo == 'testing-repos':
-                # feed for a single arch AND all testing repos
-                r = Repo.objects.filter(testing=True, staging=False)
-                qs = qs.filter(repo__in=r)
-                obj['repos'] = r
-                setattr(obj['repos'], 'name', 'all testing repositories')
-            else:
-                # feed for a single arch AND repo
-                r = Repo.objects.get(name__iexact=repo)
-                qs = qs.filter(repo=r)
-                obj['repo'] = r
-        else:
+        if repo == '':
             qs = qs.filter(repo__staging=False)
 
+        elif repo == 'stable-repos':
+            # feed for a single arch AND all stable repos
+            r = Repo.objects.filter(testing=False, staging=False)
+            qs = qs.filter(repo__in=r)
+            obj['repos'] = r
+            setattr(obj['repos'], 'name', 'all stable repositories')
+        elif repo == 'testing-repos':
+            # feed for a single arch AND all testing repos
+            r = Repo.objects.filter(testing=True, staging=False)
+            qs = qs.filter(repo__in=r)
+            obj['repos'] = r
+            setattr(obj['repos'], 'name', 'all testing repositories')
+        else:
+            # feed for a single arch AND repo
+            r = Repo.objects.get(name__iexact=repo)
+            qs = qs.filter(repo=r)
+            obj['repo'] = r
         obj['qs'] = qs[:50]
         return obj
 
@@ -231,8 +231,9 @@ class PackageUpdatesFeed(Feed):
 
         fields = dict(
             arch=obj['arch'].name if 'arch' in obj else None,
-            repo='[%s]' % obj['repo'].name.lower() if 'repo' in obj else None,
-            repos=obj['repos'].name if 'repos' in obj else None,)
+            repo=f"[{obj['repo'].name.lower()}]" if 'repo' in obj else None,
+            repos=obj['repos'].name if 'repos' in obj else None,
+        )
 
         if fields['arch']:
             if fields['repo']:
@@ -255,8 +256,11 @@ class PackageUpdatesFeed(Feed):
 
         fields = dict(
             arch=obj['arch'].name if 'arch' in obj else None,
-            repo='[%s]' % obj['repo'].name.lower() if 'repo' in obj else None,
-            repos=', '.join(['[%s]' % r.name.lower() for r in obj['repos'].all()]) if 'repos' in obj else None,)
+            repo=f"[{obj['repo'].name.lower()}]" if 'repo' in obj else None,
+            repos=', '.join([f'[{r.name.lower()}]' for r in obj['repos'].all()])
+            if 'repos' in obj
+            else None,
+        )
 
         if fields['arch']:
             s += ' for the \'%(arch)s\' architecture'
@@ -281,15 +285,13 @@ class PackageUpdatesFeed(Feed):
     def item_guid(self, item):
         # http://diveintomark.org/archives/2004/05/28/howto-atom-id
         date = item.created
-        return 'tag:%s,%s:%s%s' % (Site.objects.get_current().domain,
-                                   date.strftime('%Y-%m-%d'), item.get_absolute_url(),
-                                   date.strftime('%Y%m%d%H%M'))
+        return f"tag:{Site.objects.get_current().domain},{date.strftime('%Y-%m-%d')}:{item.get_absolute_url()}{date.strftime('%Y%m%d%H%M')}"
 
     def item_pubdate(self, item):
         return item.created
 
     def item_title(self, item):
-        return '%s %s' % (item.pkgname, item.arch.name)
+        return f'{item.pkgname} {item.arch.name}'
 
     def item_description(self, item):
         return item.pkgname
@@ -372,8 +374,7 @@ class ReleaseFeed(Feed):
     def item_guid(self, item):
         # http://diveintomark.org/archives/2004/05/28/howto-atom-id
         date = item.release_date
-        return 'tag:%s,%s:%s' % (Site.objects.get_current().domain,
-                                 date.strftime('%Y-%m-%d'), item.get_absolute_url())
+        return f"tag:{Site.objects.get_current().domain},{date.strftime('%Y-%m-%d')}:{item.get_absolute_url()}"
 
     def item_enclosure_url(self, item):
         domain = Site.objects.get_current().domain
@@ -425,8 +426,7 @@ class PlanetFeed(Feed):
     def item_guid(self, item):
         # http://diveintomark.org/archives/2004/05/28/howto-atom-id
         date = item.publishdate
-        return 'tag:%s,%s:%s' % (Site.objects.get_current().domain,
-                                 date.strftime('%Y-%m-%d'), item.url)
+        return f"tag:{Site.objects.get_current().domain},{date.strftime('%Y-%m-%d')}:{item.url}"
 
     def item_author_name(self, item):
         return item.author

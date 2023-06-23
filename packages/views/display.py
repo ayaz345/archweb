@@ -116,38 +116,36 @@ def redirect_to_search(request, name, repo, arch):
     ]
     # only include non-blank values in the query we generate
     pkg_data = [(x, y.encode('utf-8')) for x, y in pkg_data if y]
-    return redirect("/packages/?%s" % urlencode(pkg_data))
+    return redirect(f"/packages/?{urlencode(pkg_data)}")
 
 
 def details(request, name='', repo='', arch=''):
-    if all([name, repo, arch]):
-        arch_obj = get_object_or_404(Arch, name=arch)
-        repo_obj = get_object_or_404(Repo, name__iexact=repo)
-        try:
-            pkg = Package.objects.select_related(
-                'arch', 'repo', 'packager').get(pkgname=name,
-                                                repo=repo_obj, arch=arch_obj)
-            rbstatus = None
-            try:
-                rbstatus = RebuilderdStatus.objects.get(pkg=pkg)
-            except RebuilderdStatus.DoesNotExist:
-                pass
-            if request.method == 'HEAD':
-                return empty_response()
-            return render(request, 'packages/details.html', {'pkg': pkg, 'rbstatus': rbstatus,
-                          'notreproducible': rbstatus.status == RebuilderdStatus.BAD if rbstatus else False})
-        except Package.DoesNotExist:
-            # attempt a variety of fallback options before 404ing
-            options = (redirect_agnostic, split_package_details,
-                       recently_removed_package, replaced_package)
-            for method in options:
-                ret = method(request, name, repo_obj, arch_obj)
-                if ret:
-                    return ret
-            # we've tried everything at this point, nothing to see
-            raise Http404
-    else:
+    if not all([name, repo, arch]):
         return redirect_to_search(request, name, repo, arch)
+    arch_obj = get_object_or_404(Arch, name=arch)
+    repo_obj = get_object_or_404(Repo, name__iexact=repo)
+    try:
+        pkg = Package.objects.select_related(
+            'arch', 'repo', 'packager').get(pkgname=name,
+                                            repo=repo_obj, arch=arch_obj)
+        rbstatus = None
+        try:
+            rbstatus = RebuilderdStatus.objects.get(pkg=pkg)
+        except RebuilderdStatus.DoesNotExist:
+            pass
+        if request.method == 'HEAD':
+            return empty_response()
+        return render(request, 'packages/details.html', {'pkg': pkg, 'rbstatus': rbstatus,
+                      'notreproducible': rbstatus.status == RebuilderdStatus.BAD if rbstatus else False})
+    except Package.DoesNotExist:
+        # attempt a variety of fallback options before 404ing
+        options = (redirect_agnostic, split_package_details,
+                   recently_removed_package, replaced_package)
+        for method in options:
+            if ret := method(request, name, repo_obj, arch_obj):
+                return ret
+        # we've tried everything at this point, nothing to see
+        raise Http404
 
 
 def groups(request, arch=None):
@@ -258,7 +256,7 @@ def download(request, name, repo, arch, sig=False):
                                                      arch=arch, filename=pkg.filename)
 
     if sig:
-        url = url + '.sig'
+        url += '.sig'
 
     return redirect(url)
 

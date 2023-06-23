@@ -211,13 +211,14 @@ def send_todolist_emails(todo_list, new_packages):
     orphan_packages = []
     maint_packages = {}
     for todo_package in new_packages:
-        maints = todo_package.pkg.maintainers.values_list('email', flat=True)
-        if not maints:
-            orphan_packages.append(todo_package)
-        else:
+        if maints := todo_package.pkg.maintainers.values_list(
+            'email', flat=True
+        ):
             for maint in maints:
                 maint_packages.setdefault(maint, []).append(todo_package)
 
+        else:
+            orphan_packages.append(todo_package)
     for maint, packages in maint_packages.items():
         packages = sorted(packages, key=attrgetter('pkgname', 'arch'))
         ctx = {

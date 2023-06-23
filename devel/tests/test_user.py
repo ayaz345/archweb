@@ -51,7 +51,7 @@ class FindUserTest(TestCase):
             username="bjones", first_name="Bob", last_name="Jones", email="user3@example.com")
 
         for user in (self.user1, self.user2, self.user3):
-            email_addr = "%s@awesome.com" % user.username
+            email_addr = f"{user.username}@awesome.com"
             UserProfile.objects.create(user=user, public_email=email_addr)
 
         self.user4 = User.objects.create(

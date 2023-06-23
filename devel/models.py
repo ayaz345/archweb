@@ -66,9 +66,10 @@ class UserProfile(models.Model):
 
     def get_absolute_url(self):
         user = self.user
-        group = StaffGroup.objects.filter(group=user.groups.all().first()).get()
-        if group:
-            return '%s#%s' % (group.get_absolute_url(), user.username)
+        if group := StaffGroup.objects.filter(
+            group=user.groups.all().first()
+        ).get():
+            return f'{group.get_absolute_url()}#{user.username}'
         return None
 
 
@@ -110,7 +111,7 @@ class MasterKey(models.Model):
         get_latest_by = 'created'
 
     def __str__(self):
-        return '%s, created %s' % (self.owner.get_full_name(), self.created)
+        return f'{self.owner.get_full_name()}, created {self.created}'
 
 
 class DeveloperKey(models.Model):
@@ -141,7 +142,7 @@ class PGPSignature(models.Model):
         verbose_name = 'PGP signature'
 
     def __str__(self):
-        return '%s → %s' % (self.signer, self.signee)
+        return f'{self.signer} → {self.signee}'
 
 
 def create_feed_model(sender, **kwargs):
@@ -174,7 +175,7 @@ def create_feed_model(sender, **kwargs):
 
     title = obj.alias
     if obj.user.first_name and obj.user.last_name:
-        title = obj.user.first_name + ' ' + obj.user.last_name
+        title = f'{obj.user.first_name} {obj.user.last_name}'
 
     # Remove old feeds
     Feed.objects.filter(website_rss=dbmodel.website_rss).all().delete()

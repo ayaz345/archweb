@@ -16,8 +16,9 @@ class DevelView(TransactionTestCase):
             Group.objects.create(name=name)
         self.user.groups.add(Group.objects.get(name='Developers'))
         self.user.save()
-        self.profile = UserProfile.objects.create(user=self.user,
-                                                  public_email="{}@awesome.com".format(self.user.username))
+        self.profile = UserProfile.objects.create(
+            user=self.user, public_email=f"{self.user.username}@awesome.com"
+        )
         self.client.post('/login/', {
             'username': self.user.username,
             'password': password

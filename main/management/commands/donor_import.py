@@ -48,9 +48,7 @@ class Command(BaseCommand):
     def parse_subject(self, subject):
         """Format of the subject is as following: Receipt [$amount] By: John Doe [mail]"""
 
-        parsed = parse("Receipt [{amount}] By: {name} [{email}]", subject)
-
-        if parsed:
+        if parsed := parse("Receipt [{amount}] By: {name} [{email}]", subject):
             return parsed['name']
 
     def sanitize_name(self, name):
@@ -67,10 +65,7 @@ class Command(BaseCommand):
         # Normalize all capitalized names. (JOHN DOE)
         name = u' '.join(l.capitalize() for l in name.split(u' '))  # noqa: E741
 
-        # Trim excess spaces
-        name = name.rstrip().lstrip()
-
-        return name
+        return name.rstrip().lstrip()
 
     def handle(self, *args, **options):
         v = int(options.get('verbosity', 0))
@@ -105,6 +100,6 @@ class Command(BaseCommand):
         try:
             _, created = Donor.objects.get_or_create(name=name)
             if created:
-                logger.info(u'Adding donor: {}'.format(name))
+                logger.info(f'Adding donor: {name}')
         except DBError as e:
             logger.info(u'Error while adding donor: %s, %s', name, e)

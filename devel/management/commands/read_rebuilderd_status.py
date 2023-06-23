@@ -46,9 +46,7 @@ class Command(BaseCommand):
         if not url:
             logger.error("no rebuilderd_url configured in local_settings.py")
 
-        was_repro = import_rebuilderd_status(url)
-
-        if was_repro:
+        if was_repro := import_rebuilderd_status(url):
             send_repro_emails(was_repro)
 
 
@@ -78,8 +76,7 @@ def import_rebuilderd_status(url):
     was_repro = []
     headers = {}
 
-    last_modified = cache.get('rebuilderd:last-modified')
-    if last_modified:
+    if last_modified := cache.get('rebuilderd:last-modified'):
         logger.debug('Setting If-Modified-Since header')
         headers = {'If-Modified-Since': last_modified}
 
@@ -88,8 +85,7 @@ def import_rebuilderd_status(url):
         logger.debug('The rebuilderd data has not been updated since we last checked it')
         return was_repro
 
-    last_modified = req.headers.get('last-modified')
-    if last_modified:
+    if last_modified := req.headers.get('last-modified'):
         cache.set('rebuilderd:last-modified', last_modified, 86400)
 
     data = req.json()
@@ -107,10 +103,9 @@ def import_rebuilderd_status(url):
         version = pkg['version']
         build_id = pkg['build_id']
 
-        matches = re.search(EPOCH_REGEX, version)
-        if matches:
-            epoch = matches.group(1)
-            version = matches.group(2)
+        if matches := re.search(EPOCH_REGEX, version):
+            epoch = matches[1]
+            version = matches[2]
 
         pkgver, pkgrel = version.rsplit('-', 1)
 

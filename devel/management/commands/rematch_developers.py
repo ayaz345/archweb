@@ -53,8 +53,7 @@ def match_packager(finder):
     logger.info("%d packager strings retrieved", len(unmatched))
     for packager in unmatched:
         logger.debug("packager string %s", packager)
-        user = finder.find(packager)
-        if user:
+        if user := finder.find(packager):
             mapping[packager] = user
             logger.debug("  found user %s", user.username)
             matched_count += 1
@@ -79,8 +78,7 @@ def match_flagrequest(finder):
     logger.info("%d email addresses retrieved", len(unmatched))
     for user_email in unmatched:
         logger.debug("email %s", user_email)
-        user = finder.find_by_email(user_email)
-        if user:
+        if user := finder.find_by_email(user_email):
             mapping[user_email] = user
             logger.debug("  found user %s", user.username)
             matched_count += 1

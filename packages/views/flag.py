@@ -70,20 +70,11 @@ def flag(request, name, repo, arch):
             flagged_pkgs = list(pkgs)
 
             # find a common version if there is one available to store
-            versions = set((pkg.pkgver, pkg.pkgrel, pkg.epoch)
-                           for pkg in flagged_pkgs)
-            if len(versions) == 1:
-                version = versions.pop()
-            else:
-                version = ('', '', 0)
-
+            versions = {(pkg.pkgver, pkg.pkgrel, pkg.epoch) for pkg in flagged_pkgs}
+            version = versions.pop() if len(versions) == 1 else ('', '', 0)
             message = form.cleaned_data['message']
             ip_addr = request.META.get('REMOTE_ADDR')
-            if authenticated:
-                email = request.user.email
-            else:
-                email = form.cleaned_data['email']
-
+            email = request.user.email if authenticated else form.cleaned_data['email']
             @transaction.atomic
             def perform_updates():
                 current_time = now()

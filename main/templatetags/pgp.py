@@ -8,14 +8,14 @@ register = template.Library()
 
 
 def format_key(key_id):
-    if len(key_id) in (8, 20):
-        return '0x%s' % key_id
+    if len(key_id) in {8, 20}:
+        return f'0x{key_id}'
     elif len(key_id) == 40:
         # normal display format is 5 groups of 4 hex chars seperated by spaces,
         # double space, then 5 more groups of 4 hex chars
         split = tuple(key_id[i:i + 4] for i in range(0, 40, 4))
-        return '%s\u00a0 %s' % (' '.join(split[0:5]), ' '.join(split[5:10]))
-    return '0x%s' % key_id
+        return '%s\u00a0 %s' % (' '.join(split[:5]), ' '.join(split[5:10]))
+    return f'0x{key_id}'
 
 
 def pad_key_id(key_id):
@@ -52,9 +52,9 @@ def pgp_key_link(key_id, link_text=None):
         return format_key(key_id)
     pgp_server_secure = getattr(settings, 'PGP_SERVER_SECURE', False)
     scheme = 'https' if pgp_server_secure else 'http'
-    url = '%s://%s/pks/lookup?op=vindex&amp;fingerprint=on&amp;exact=on&amp;search=0x%s' % (scheme, pgp_server, key_id)
+    url = f'{scheme}://{pgp_server}/pks/lookup?op=vindex&amp;fingerprint=on&amp;exact=on&amp;search=0x{key_id}'
     if link_text is None:
-        link_text = '0x%s' % key_id[-8:]
+        link_text = f'0x{key_id[-8:]}'
     values = (url, format_key(key_id), link_text)
     return format_html('<a href="%s" title="PGP key search for %s">%s</a>' % values)
 
@@ -62,8 +62,7 @@ def pgp_key_link(key_id, link_text=None):
 @register.simple_tag
 def user_pgp_key_link(dev_keys, key_id):
     normalized = key_id[-16:]
-    found = dev_keys.get(normalized, None)
-    if found:
+    if found := dev_keys.get(normalized, None):
         return pgp_key_link(key_id, found.owner.get_full_name())
     else:
         return pgp_key_link(key_id, None)
@@ -71,9 +70,7 @@ def user_pgp_key_link(dev_keys, key_id):
 
 @register.filter
 def pgp_fingerprint(key_id):
-    if not key_id:
-        return ''
-    return mark_safe(format_key(conditional_escape(key_id)))
+    return '' if not key_id else mark_safe(format_key(conditional_escape(key_id)))
 
 
 @register.simple_tag

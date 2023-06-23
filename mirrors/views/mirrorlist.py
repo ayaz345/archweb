@@ -89,10 +89,7 @@ def find_mirrors(request, countries=None, protocols=None, use_status=False,
                  ipv4_supported=True, ipv6_supported=True):
     if not protocols:
         protocols = MirrorProtocol.objects.filter(is_download=True)
-    elif hasattr(protocols, 'model') and protocols.model == MirrorProtocol:
-        # we already have a queryset, no need to query again
-        pass
-    else:
+    elif not hasattr(protocols, 'model') or protocols.model != MirrorProtocol:
         protocols = MirrorProtocol.objects.filter(protocol__in=protocols)
     qset = MirrorUrl.objects.select_related().filter(
         protocol__in=protocols, active=True,

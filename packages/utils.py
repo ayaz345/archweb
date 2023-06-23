@@ -26,10 +26,7 @@ def parse_version(version):
         return None, None, 0
     ver = match.group(3)
     rel = match.group(4)
-    if match.group(2):
-        epoch = int(match.group(2))
-    else:
-        epoch = 0
+    epoch = int(match.group(2)) if match.group(2) else 0
     return ver, rel, epoch
 
 
@@ -192,10 +189,9 @@ SELECT DISTINCT id
     cursor = connection.cursor()
     cursor.execute(sql, [PackageRelation.MAINTAINER])
     to_fetch = [row[0] for row in cursor.fetchall()]
-    relations = PackageRelation.objects.select_related(
-        'user', 'user__userprofile').filter(
-            id__in=to_fetch)
-    return relations
+    return PackageRelation.objects.select_related(
+        'user', 'user__userprofile'
+    ).filter(id__in=to_fetch)
 
 
 def attach_maintainers(packages):
@@ -272,8 +268,7 @@ class PackageSignoffGroup(object):
         if len(self.packages) == 1:
             return self.packages[0]
 
-        same_pkgs = [p for p in self.packages if p.pkgname == p.pkgbase]
-        if same_pkgs:
+        if same_pkgs := [p for p in self.packages if p.pkgname == p.pkgbase]:
             return same_pkgs[0]
 
         return PackageStandin(self.packages[0])
@@ -284,7 +279,7 @@ class PackageSignoffGroup(object):
         for s in all_signoffs:
             if s.pkgbase != self.pkgbase:
                 continue
-            if self.version and not s.full_version == self.version:
+            if self.version and s.full_version != self.version:
                 continue
             if s.arch_id == self.arch.id and s.repo_id == self.repo.id:
                 self.signoffs.add(s)
@@ -293,7 +288,7 @@ class PackageSignoffGroup(object):
         for spec in specifications:
             if spec.pkgbase != self.pkgbase:
                 continue
-            if self.version and not spec.full_version == self.version:
+            if self.version and spec.full_version != self.version:
                 continue
             if spec.arch_id == self.arch.id and spec.repo_id == self.repo.id:
                 self.specification = spec
@@ -341,7 +336,7 @@ SELECT DISTINCT s.id
     cursor = connection.cursor()
     # query pre-process- fill in table name and placeholders for IN
     repo_sql = ','.join(['%s' for _ in repos])
-    sql = sql % (model._meta.db_table, repo_sql, repo_sql)
+    sql %= (model._meta.db_table, repo_sql, repo_sql)
     repo_ids = [r.pk for r in repos]
     # repo_ids are needed twice, so double the array
     cursor.execute(sql, repo_ids * 2)

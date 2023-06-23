@@ -41,22 +41,20 @@ class Release(models.Model):
         return reverse('releng-release-detail', args=[self.version])
 
     def dir_path(self):
-        return "iso/%s/" % self.version
+        return f"iso/{self.version}/"
 
     def iso_url(self):
-        return "iso/%s/archlinux-%s-x86_64.iso" % (self.version, self.version)
+        return f"iso/{self.version}/archlinux-{self.version}-x86_64.iso"
 
     def tarball_url(self):
-        return "iso/%s/archlinux-bootstrap-%s-x86_64.tar.gz" % (self.version, self.version)
+        return f"iso/{self.version}/archlinux-bootstrap-{self.version}-x86_64.tar.gz"
 
     def magnet_uri(self):
-        query = [
-            ('dn', "archlinux-%s-x86_64.iso" % self.version),
-        ]
+        query = [('dn', f"archlinux-{self.version}-x86_64.iso")]
         metadata = self.torrent()
         if metadata and 'info_hash' in metadata:
-            query.insert(0, ('xt', "urn:btih:%s" % metadata['info_hash']))
-        return "magnet:?%s" % '&'.join(['%s=%s' % (k, v) for k, v in query])
+            query.insert(0, ('xt', f"urn:btih:{metadata['info_hash']}"))
+        return f"magnet:?{'&'.join([f'{k}={v}' for k, v in query])}"
 
     def info_html(self):
         return mark_safe(parse_markdown(self.info))

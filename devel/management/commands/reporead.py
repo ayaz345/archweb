@@ -144,7 +144,7 @@ class RepoPackage(object):
         '''Very similar to the main.models.Package method.'''
         if self.epoch > 0:
             return '%d:%s-%s' % (self.epoch, self.ver, self.rel)
-        return '%s-%s' % (self.ver, self.rel)
+        return f'{self.ver}-{self.rel}'
 
 
 DEPEND_RE = re.compile(r"^(.+?)((>=|<=|=|>|<)(.+))?$")
@@ -156,8 +156,7 @@ def create_depend(package, dep_str, deptype='D'):
     parts = dep_str.split(': ', 1)
     if len(parts) > 1:
         depend.description = parts[1].strip()
-    match = DEPEND_RE.match(parts[0].strip())
-    if match:
+    if match := DEPEND_RE.match(parts[0].strip()):
         depend.name = match.group(1)
         if match.group(3):
             depend.comparison = match.group(3)
@@ -172,8 +171,7 @@ def create_depend(package, dep_str, deptype='D'):
 
 def create_related(model, package, rel_str, equals_only=False):
     related = model(pkg=package)
-    match = DEPEND_RE.match(rel_str)
-    if match:
+    if match := DEPEND_RE.match(rel_str):
         related.name = match.group(1)
         if match.group(3):
             comp = match.group(3)
@@ -200,10 +198,9 @@ def create_multivalued(dbpkg, repopkg, db_attr, repo_attr):
     collection = getattr(dbpkg, db_attr)
     collection.all().delete()
     model = collection.model
-    new_items = []
-    for name in getattr(repopkg, repo_attr):
-        new_items.append(model(pkg=dbpkg, name=name))
-    if new_items:
+    if new_items := [
+        model(pkg=dbpkg, name=name) for name in getattr(repopkg, repo_attr)
+    ]:
         model.objects.bulk_create(new_items)
 
 
@@ -225,10 +222,7 @@ def populate_pkg(dbpkg, repopkg, force=False, timestamp=None, package_sigs=False
         requests = requests.exclude(pkgver=repopkg.ver, epoch=repopkg.epoch)
         requests.delete()
 
-    if repopkg.base:
-        dbpkg.pkgbase = repopkg.base
-    else:
-        dbpkg.pkgbase = repopkg.name
+    dbpkg.pkgbase = repopkg.base if repopkg.base else repopkg.name
     dbpkg.pkgver = repopkg.ver
     dbpkg.pkgrel = repopkg.rel
     dbpkg.epoch = repopkg.epoch
@@ -244,7 +238,7 @@ def populate_pkg(dbpkg, repopkg, force=False, timestamp=None, package_sigs=False
     if repopkg.pgpsig:
         dbpkg.signature_bytes = b64decode(repopkg.pgpsig.encode('utf-8'))
     else:
-        filepath = os.path.join(repo_dir, repopkg.filename + '.sig')
+        filepath = os.path.join(repo_dir, f'{repopkg.filename}.sig')
         if os.path.exists(filepath):
             with open(filepath, 'rb') as fp:
                 dbpkg.signature_bytes = fp.read()
@@ -368,10 +362,7 @@ def update_common(archname, reponame, pkgs, sanity_check=True):
         logger.info("%d packages in current web DB", len(dbpkgs))
         logger.info("%d packages in new updating DB", len(pkgs))
 
-        if len(dbpkgs):
-            dbpercent = 100.0 * len(pkgs) / len(dbpkgs)
-        else:
-            dbpercent = 0.0
+        dbpercent = 100.0 * len(pkgs) / len(dbpkgs) if len(dbpkgs) else 0.0
         logger.info("DB package ratio: %.1f%%", dbpercent)
 
         # Fewer than 20 packages makes the percentage check unreliable, but it
@@ -428,8 +419,7 @@ def db_update(archname, reponame, pkgs, force=False, repo_dir=None):
                     if not User.objects.filter(
                             package_relations__pkgbase=dbpkg.pkgbase,
                             package_relations__type=PackageRelation.MAINTAINER).exists():
-                        packager = finder.find(pkg.packager)
-                        if packager:
+                        if packager := finder.find(pkg.packager):
                             prel = PackageRelation(pkgbase=dbpkg.pkgbase,
                                                    user=packager,
                                                    type=PackageRelation.MAINTAINER)
@@ -533,7 +523,9 @@ def parse_info(pkgname, filename, iofile):
         elif blockname:
             store[blockname].append(line)
         else:
-            raise Exception("%s: Read package info outside a block while reading from %s: %s" % (pkgname, filename, line))
+            raise Exception(
+                f"{pkgname}: Read package info outside a block while reading from {filename}: {line}"
+            )
     return store
 
 
@@ -551,9 +543,8 @@ def parse_repo(repopath):
 
     logger.info("Reading repo tarfile %s", repopath)
     filename = os.path.split(repopath)[1]
-    m = re.match(r"^(.*)\.(db|files)\.tar(\..*)?$", filename)
-    if m:
-        reponame = m.group(1)
+    if m := re.match(r"^(.*)\.(db|files)\.tar(\..*)?$", filename):
+        reponame = m[1]
     else:
         logger.error("File does not have the proper extension")
         raise Exception("File does not have the proper extension")
@@ -593,7 +584,7 @@ def locate_arch(arch):
     try:
         return Arch.objects.get(name=arch)
     except Arch.DoesNotExist:
-        raise CommandError('Specified architecture %s is not currently known.' % arch)
+        raise CommandError(f'Specified architecture {arch} is not currently known.')
 
 
 def read_repo(primary_arch, repo_file, options):
@@ -608,10 +599,9 @@ def read_repo(primary_arch, repo_file, options):
     repo, packages = parse_repo(repo_file)
     repo_dir = os.path.dirname(repo_file)
 
-    # group packages by arch -- to handle noarch stuff
-    packages_arches = {}
-    for arch in Arch.objects.filter(agnostic=True):
-        packages_arches[arch.name] = []
+    packages_arches = {
+        arch.name: [] for arch in Arch.objects.filter(agnostic=True)
+    }
     packages_arches[primary_arch.name] = []
 
     for package in packages:

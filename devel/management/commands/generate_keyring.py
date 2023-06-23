@@ -56,7 +56,7 @@ def generate_keyring(keyserver, keyring):
     # GPG is stupid and interprets any filename without path portion as being
     # in ~/.gnupg/. Fake it out if we just get a bare filename.
     if '/' not in keyring:
-        keyring = './%s' % keyring
+        keyring = f'./{keyring}'
     gpg_cmd = ["gpg", "--no-default-keyring", "--keyring", keyring,
                "--keyserver", keyserver, "--recv-keys"]
     logger.info("running command: %r", gpg_cmd)

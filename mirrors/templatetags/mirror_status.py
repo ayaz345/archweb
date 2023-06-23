@@ -23,9 +23,7 @@ def hours(value):
     total_secs = value.seconds + value.days * 24 * 3600
     mins = total_secs // 60
     hrs, mins = divmod(mins, 60)
-    if hrs == 1:
-        return '%d hour' % hrs
-    return '%d hours' % hrs
+    return '%d hour' % hrs if hrs == 1 else '%d hours' % hrs
 
 
 @register.filter

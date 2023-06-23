@@ -58,10 +58,7 @@ def signoff_package(request, name, repo, arch, revoke=False):
         signoffs = Signoff.objects.for_package(package).filter(revoked__isnull=True)
 
         if signoffs.count() == spec.required:
-            packager = package.packager
-
-            # TODO: Handle notification when packager does not exist
-            if packager:
+            if packager := package.packager:
                 toemail = [packager.email]
                 subject = f'{package.repo.name} package [{package.pkgname} {package.full_version}] approved'
 
@@ -187,12 +184,14 @@ class SignoffJSONEncoder(DjangoJSONEncoder):
             data['pkgnames'] = [p.pkgname for p in obj.packages]
             data['package_count'] = len(obj.packages)
             data['approved'] = obj.approved()
-            data.update((attr, getattr(obj.specification, attr))
-                        for attr in self.signoff_spec_attrs)
+            data |= (
+                (attr, getattr(obj.specification, attr))
+                for attr in self.signoff_spec_attrs
+            )
             return data
         elif isinstance(obj, Signoff):
             return {attr: getattr(obj, attr) for attr in self.signoff_attrs}
-        elif isinstance(obj, Arch) or isinstance(obj, Repo):
+        elif isinstance(obj, (Arch, Repo)):
             return str(obj)
         elif isinstance(obj, User):
             return obj.username
@@ -209,7 +208,6 @@ def signoffs_json(request):
         'signoff_groups': signoff_groups,
     }
     to_json = json.dumps(data, ensure_ascii=False, cls=SignoffJSONEncoder)
-    response = HttpResponse(to_json, content_type='application/json')
-    return response
+    return HttpResponse(to_json, content_type='application/json')
 
 # vim: set ts=4 sw=4 et:

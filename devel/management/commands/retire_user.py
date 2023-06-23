@@ -45,7 +45,7 @@ class Command(BaseCommand):
         try:
             user = User.objects.get(username=options['user'])
         except User.DoesNotExist:
-            raise CommandError(u"Failed to find User '{}'".format(options['user']))
+            raise CommandError(f"Failed to find User '{options['user']}'")
 
         try:
             profile = UserProfile.objects.get(user=user)

@@ -24,16 +24,12 @@ class PackagesSitemap(Sitemap):
         return None
 
     def changefreq(self, obj):
-        if obj.repo.testing or obj.repo.staging:
-            return "daily"
-        return "weekly"
+        return "daily" if obj.repo.testing or obj.repo.staging else "weekly"
 
     def priority(self, obj):
         if obj.repo.testing:
             return "0.4"
-        if obj.repo.staging:
-            return "0.1"
-        return "0.5"
+        return "0.1" if obj.repo.staging else "0.5"
 
 
 class PackageFilesSitemap(PackagesSitemap):
@@ -41,7 +37,7 @@ class PackageFilesSitemap(PackagesSitemap):
     priority = "0.1"
 
     def location(self, obj):
-        return PackagesSitemap.location(self, obj) + 'files/'
+        return f'{PackagesSitemap.location(self, obj)}files/'
 
     def lastmod(self, obj):
         return obj.files_last_update
@@ -64,7 +60,7 @@ class PackageGroupsSitemap(Sitemap):
         return None
 
     def location(self, obj):
-        return '/groups/%s/%s/' % (obj['arch'], obj['name'])
+        return f"/groups/{obj['arch']}/{obj['name']}/"
 
 
 class SplitPackagesSitemap(Sitemap):
@@ -100,16 +96,12 @@ class NewsSitemap(Sitemap):
         return None
 
     def priority(self, obj):
-        if obj.last_modified > self.one_week_ago:
-            return "0.9"
-        return "0.8"
+        return "0.9" if obj.last_modified > self.one_week_ago else "0.8"
 
     def changefreq(self, obj):
         if obj.last_modified > self.one_day_ago:
             return 'daily'
-        if obj.last_modified > self.one_week_ago:
-            return 'weekly'
-        return 'yearly'
+        return 'weekly' if obj.last_modified > self.one_week_ago else 'yearly'
 
 
 class RecentNewsSitemap(NewsSitemap):
@@ -132,9 +124,7 @@ class ReleasesSitemap(Sitemap):
         return None
 
     def priority(self, obj):
-        if obj.available:
-            return "0.6"
-        return "0.2"
+        return "0.6" if obj.available else "0.2"
 
 
 class TodolistSitemap(Sitemap):
@@ -154,9 +144,7 @@ class TodolistSitemap(Sitemap):
         return None
 
     def changefreq(self, obj):
-        if obj.last_modified > self.two_weeks_ago:
-            return 'weekly'
-        return 'monthly'
+        return 'weekly' if obj.last_modified > self.two_weeks_ago else 'monthly'
 
 
 class BaseSitemap(Sitemap):
@@ -192,13 +180,9 @@ class BaseSitemap(Sitemap):
         return reverse(name)
 
     def priority(self, obj):
-        if isinstance(obj, tuple):
-            return obj[1]
-        return self.DEFAULT_PRIORITY
+        return obj[1] if isinstance(obj, tuple) else self.DEFAULT_PRIORITY
 
     def changefreq(self, obj):
-        if isinstance(obj, tuple):
-            return obj[2]
-        return 'monthly'
+        return obj[2] if isinstance(obj, tuple) else 'monthly'
 
 # vim: set ts=4 sw=4 et:

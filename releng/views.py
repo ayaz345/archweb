@@ -30,8 +30,8 @@ def release_torrent(request, version):
     data = b64decode(release.torrent_data.encode('utf-8'))
     response = HttpResponse(data, content_type='application/x-bittorrent')
     # TODO: this is duplicated from Release.iso_url()
-    filename = 'archlinux-%s-x86_64.iso.torrent' % release.version
-    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    filename = f'archlinux-{release.version}-x86_64.iso.torrent'
+    response['Content-Disposition'] = f'attachment; filename={filename}'
     return response
 
 
@@ -40,20 +40,20 @@ class ReleaseJSONEncoder(DjangoJSONEncoder):
                           'created', 'md5_sum', 'sha1_sum', 'sha256_sum', 'b2_sum')
 
     def default(self, obj):
-        if isinstance(obj, Release):
-            data = {attr: getattr(obj, attr) or None
-                    for attr in self.release_attributes}
-            data['available'] = obj.available
-            data['iso_url'] = '/' + obj.iso_url()
-            data['magnet_uri'] = obj.magnet_uri()
-            data['torrent_url'] = reverse('releng-release-torrent', args=[obj.version])
-            data['info'] = obj.info_html()
-            torrent_data = obj.torrent()
-            if torrent_data:
-                torrent_data.pop('url_list', None)
-            data['torrent'] = torrent_data
-            return data
-        return super(ReleaseJSONEncoder, self).default(obj)
+        if not isinstance(obj, Release):
+            return super(ReleaseJSONEncoder, self).default(obj)
+        data = {attr: getattr(obj, attr) or None
+                for attr in self.release_attributes}
+        data['available'] = obj.available
+        data['iso_url'] = f'/{obj.iso_url()}'
+        data['magnet_uri'] = obj.magnet_uri()
+        data['torrent_url'] = reverse('releng-release-torrent', args=[obj.version])
+        data['info'] = obj.info_html()
+        torrent_data = obj.torrent()
+        if torrent_data:
+            torrent_data.pop('url_list', None)
+        data['torrent'] = torrent_data
+        return data
 
 
 def releases_json(request):
@@ -70,8 +70,7 @@ def releases_json(request):
         'latest_version': latest_version,
     }
     to_json = json.dumps(data, ensure_ascii=False, cls=ReleaseJSONEncoder)
-    response = HttpResponse(to_json, content_type='application/json')
-    return response
+    return HttpResponse(to_json, content_type='application/json')
 
 
 def netboot_config(request):
@@ -93,9 +92,11 @@ def netboot_config(request):
 def netboot_info(request):
     ipxepkg = None
     ipxepkgs = Package.objects.filter(pkgname='ipxe').all()
-    ipxepkgs = [pkg for pkg in ipxepkgs if not pkg.repo.testing and 'Staging' not in pkg.repo.name]
-
-    if ipxepkgs:
+    if ipxepkgs := [
+        pkg
+        for pkg in ipxepkgs
+        if not pkg.repo.testing and 'Staging' not in pkg.repo.name
+    ]:
         ipxepkg = ipxepkgs[0]
 
     context = {

@@ -48,11 +48,10 @@ def attach_staging(packages, list_id):
     # now build a lookup dict to attach to the correct package
     lookup = {(p.pkgname, p.arch): p for p in staging_pkgs}
 
-    annotated = []
     for package in packages:
         in_staging = lookup.get((package.pkgname, package.arch), None)
         package.staging = in_staging
 
-    return annotated
+    return []
 
 # vim: set ts=4 sw=4 et:

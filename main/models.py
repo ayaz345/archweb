@@ -124,7 +124,7 @@ class Package(models.Model):
     def full_version(self):
         if self.epoch > 0:
             return '%d:%s-%s' % (self.epoch, self.pkgver, self.pkgrel)
-        return '%s-%s' % (self.pkgver, self.pkgrel)
+        return f'{self.pkgver}-{self.pkgrel}'
 
     def get_absolute_url(self):
         return f'/packages/{self.repo.name.lower()}/{self.arch.name}/{self.pkgname}/'
@@ -280,7 +280,7 @@ class Package(models.Model):
             dep = dep_pkgs[0]
             if len(dep_pkgs) > 1:
                 dep_pkgs = [d for d in dep_pkgs if d.pkg.repo.testing == self.repo.testing and d.pkg.repo.staging == self.repo.staging]
-                if len(dep_pkgs) > 0:
+                if dep_pkgs:
                     dep = dep_pkgs[0]
             trimmed.append(dep)
 
@@ -355,9 +355,7 @@ class Package(models.Model):
             pkglist = Package.objects.normal().filter(
                 arch=self.arch, repo__testing=self.repo.testing,
                 repo__staging=self.repo.staging, pkgname=self.pkgbase)
-            if len(pkglist) > 0:
-                return pkglist[0]
-            return None
+            return pkglist[0] if len(pkglist) > 0 else None
 
     def split_packages(self):
         """
@@ -378,13 +376,13 @@ class Package(models.Model):
             return None
         from packages.models import FlagRequest
         try:
-            # Note that we don't match on pkgrel here; this is because a pkgrel
-            # bump does not unflag a package so we can still show the same flag
-            # request from a different pkgrel.
-            request = FlagRequest.objects.filter(
-                pkgbase=self.pkgbase, repo=self.repo,
-                pkgver=self.pkgver, epoch=self.epoch, is_spam=False).latest()
-            return request
+            return FlagRequest.objects.filter(
+                pkgbase=self.pkgbase,
+                repo=self.repo,
+                pkgver=self.pkgver,
+                epoch=self.epoch,
+                is_spam=False,
+            ).latest()
         except FlagRequest.DoesNotExist:
             return None
 
@@ -426,8 +424,8 @@ class Package(models.Model):
         elif self.pkgname.endswith('-multilib'):
             names.append(self.pkgname[:-9])
         else:
-            names.append('lib32-' + self.pkgname)
-            names.append(self.pkgname + '-multilib')
+            names.append(f'lib32-{self.pkgname}')
+            names.append(f'{self.pkgname}-multilib')
         return Package.objects.normal().filter(
             pkgname__in=names).exclude(id=self.id).order_by(
             'arch__name', 'repo__name')
@@ -440,7 +438,7 @@ class PackageFile(models.Model):
     filename = models.CharField(max_length=1024, null=True, blank=True)
 
     def __str__(self):
-        return "%s%s" % (self.directory, self.filename or '')
+        return f"{self.directory}{self.filename or ''}"
 
     class Meta:
         db_table = 'package_files'
@@ -479,7 +477,7 @@ class RebuilderdStatus(models.Model):
         return self.REBUILDERD_STATUSES[self.status][1]
 
     def __str__(self):
-        return "pkg=%s, status=%s" % (self.pkg, self.status_str)
+        return f"pkg={self.pkg}, status={self.status_str}"
 
 
 class Soname(models.Model):

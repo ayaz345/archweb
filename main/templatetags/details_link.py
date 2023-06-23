@@ -12,7 +12,7 @@ def link_encode(url, query):
     # doesn't barf at the data we pass it
     query = {k: str(v).encode('utf-8') for k, v in query.items()}
     data = urlencode(query)
-    return "%s?%s" % (url, data)
+    return f"{url}?{data}"
 
 
 @register.inclusion_tag('packages/details_link.html')
@@ -45,7 +45,7 @@ def bug_report(package):
     data = {
         'project': package.repo.bugs_project,
         'product_category': package.repo.bugs_category,
-        'item_summary': '[%s] PLEASE ENTER SUMMARY' % package.pkgname,
+        'item_summary': f'[{package.pkgname}] PLEASE ENTER SUMMARY',
     }
     return link_encode(url, data)
 
